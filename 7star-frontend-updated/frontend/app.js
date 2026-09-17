@@ -1,24 +1,16 @@
 // ============================================================
-// RAM MENS WEAR frontend — fully self-contained, no server needed.
-// All data (products, users, cart, wishlist, orders) lives in
-// the browser's localStorage so the site works the moment you
-// open index.html — no backend, no database required.
+// RAM MENS WEAR frontend client.
+// Set window.RAM_API_BASE before this script when the API is hosted separately.
 // ============================================================
 
 const STORAGE_KEYS = {
-  PRODUCTS: 'seven_products',
-  USERS: 'seven_users',
   CURRENT_USER: 'seven_current_user',
-  ORDERS: 'seven_orders',
-  CART_PREFIX: 'seven_cart_',
-  WISHLIST_PREFIX: 'seven_wishlist_'
+  TOKEN: 'ram_auth_token'
 };
 
-// Default admin + demo accounts, created the first time the site loads.
-const DEFAULT_USERS = [
-  { id: 1, name: 'Store Admin', email: 'admin@rammenswear.com', password: 'admin123', role: 'admin' },
-  { id: 2, name: 'Demo Customer', email: 'demo@rammenswear.com', password: 'demo1234', role: 'customer' }
-];
+const API_BASE = window.RAM_API_BASE || (window.location.protocol === 'file:'
+  ? 'http://localhost:5000/api'
+  : `${window.location.protocol}//${window.location.hostname}:5000/api`);
 
 // Seed catalogue used the very first time the site runs.
 // ============================================================
@@ -603,39 +595,42 @@ function writeJSON(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-function ensureSeedData() {
-  if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-    writeJSON(STORAGE_KEYS.PRODUCTS, DEFAULT_PRODUCTS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-    writeJSON(STORAGE_KEYS.USERS, DEFAULT_USERS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-    writeJSON(STORAGE_KEYS.ORDERS, []);
-  }
-}
+async function apiRequest(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
 
-function nextId(list) {
-  return list.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401) clearSession();
+    throw new Error(body.message || `Request failed (${response.status})`);
+  }
+  return body;
 }
 
 // ---------------- session / auth ----------------
 
 function getCurrentUser() {
-  return readJSON(STORAGE_KEYS.CURRENT_USER, null);
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || 'null');
+  } catch (error) {
+    return null;
+  }
 }
 
 function getToken() {
-  const user = getCurrentUser();
-  return user ? String(user.id) : null;
+  return localStorage.getItem(STORAGE_KEYS.TOKEN);
 }
 
-function setSession(user) {
-  writeJSON(STORAGE_KEYS.CURRENT_USER, user);
+function setSession(user, token) {
+  localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+  localStorage.setItem(STORAGE_KEYS.TOKEN, token);
 }
 
 function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+  localStorage.removeItem(STORAGE_KEYS.TOKEN);
 }
 
 function requireLogin(message = 'Please login to continue') {
@@ -686,8 +681,8 @@ function showToast(message, type = 'success') {
 
 // ---------------- products ----------------
 
-function loadProducts() {
-  PRODUCTS = readJSON(STORAGE_KEYS.PRODUCTS, DEFAULT_PRODUCTS);
+async function loadProducts() {
+  PRODUCTS = await apiRequest('/products');
 }
 
 function getProductById(productId) {
@@ -696,71 +691,37 @@ function getProductById(productId) {
 
 // ---------------- cart (per logged-in user) ----------------
 
-function cartKey() {
-  const user = getCurrentUser();
-  return user ? `${STORAGE_KEYS.CART_PREFIX}${user.id}` : 'seven_guest_cart';
+async function loadCart() {
+  cartItems = getToken() ? await apiRequest('/cart') : [];
 }
 
-function loadCart() {
-  const key = cartKey();
-  cartItems = readJSON(key, []);
-}
-
-function saveCart() {
-  const key = cartKey();
-  writeJSON(key, cartItems);
-}
-
-function addToCart(productId, qty = 1, size = 'M', color = 'Default') {
+async function addToCart(productId, qty = 1, size = '', color = '') {
   if (!requireLogin('Please login to add items to your cart')) {
     return;
   }
 
   const product = getProductById(productId);
   if (!product) return;
-
-  const existing = cartItems.find(
-    (item) => Number(item.productId) === Number(productId) && item.size === size && item.color === color
-  );
-
-  if (existing) {
-    existing.qty += qty;
-  } else {
-    cartItems.push({
-      _id: `${productId}-${Date.now()}`,
-      productId: product.id,
-      name: product.name,
-      category: product.category,
-      image: product.image,
-      price: product.price,
-      oldPrice: product.oldPrice,
-      qty,
-      size,
-      color
-    });
-  }
-
-  saveCart();
+  cartItems = await apiRequest('/cart', {
+    method: 'POST',
+    body: JSON.stringify({ productId, qty, size, color })
+  });
   renderCartBadge();
   renderMiniCart(product);
   showToast(`${product.name} added to cart`, 'success');
 }
 
-function removeFromCart(itemId) {
-  cartItems = cartItems.filter((item) => item._id !== itemId);
-  saveCart();
+async function removeFromCart(itemId) {
+  cartItems = await apiRequest(`/cart/${encodeURIComponent(itemId)}`, { method: 'DELETE' });
   renderCartBadge();
   showToast('Item removed from cart', 'info');
 }
 
-function updateQuantity(itemId, change) {
-  const item = cartItems.find((cartItem) => cartItem._id === itemId);
-  if (!item) return;
-  item.qty += change;
-  if (item.qty <= 0) {
-    cartItems = cartItems.filter((cartItem) => cartItem._id !== itemId);
-  }
-  saveCart();
+async function updateQuantity(itemId, change) {
+  cartItems = await apiRequest(`/cart/${encodeURIComponent(itemId)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ change })
+  });
   renderCartBadge();
 }
 
@@ -773,11 +734,7 @@ function calculateCartTotal() {
   const coupon = localStorage.getItem('ram_coupon') || '';
   let discount = 0;
   if (subtotal > 0) {
-    if (coupon.toUpperCase() === 'STAR20' || coupon.toUpperCase() === 'RAM20') {
-      discount = Math.round(subtotal * 0.20);
-    } else {
-      discount = Math.round(subtotal * 0.05); // 5% default membership savings
-    }
+    discount = Math.round(subtotal * 0.08);
   }
 
   const total = Math.max(subtotal + delivery - discount, 0);
@@ -834,44 +791,28 @@ function renderMiniCart(product) {
 
 // ---------------- wishlist ----------------
 
-function wishlistKey() {
-  const user = getCurrentUser();
-  return user ? `${STORAGE_KEYS.WISHLIST_PREFIX}${user.id}` : null;
-}
-
-function loadWishlist() {
-  const key = wishlistKey();
-  wishlistIds = key ? readJSON(key, []) : [];
-}
-
-function saveWishlist() {
-  const key = wishlistKey();
-  if (key) {
-    writeJSON(key, wishlistIds);
-  }
+async function loadWishlist() {
+  wishlistIds = getToken() ? await apiRequest('/wishlist') : [];
 }
 
 function isInWishlist(productId) {
   return wishlistIds.includes(Number(productId));
 }
 
-function toggleWishlist(productId) {
+async function toggleWishlist(productId) {
   if (!requireLogin('Please login to use your wishlist')) {
     return null;
   }
   const id = Number(productId);
-  if (wishlistIds.includes(id)) {
-    wishlistIds = wishlistIds.filter((wishId) => wishId !== id);
-  } else {
-    wishlistIds.push(id);
-  }
-  saveWishlist();
+  wishlistIds = await apiRequest('/wishlist', {
+    method: 'POST',
+    body: JSON.stringify({ productId: Number(productId) })
+  });
   return isInWishlist(id);
 }
 
-function removeFromWishlist(productId) {
-  wishlistIds = wishlistIds.filter((id) => id !== Number(productId));
-  saveWishlist();
+async function removeFromWishlist(productId) {
+  wishlistIds = await apiRequest(`/wishlist/${Number(productId)}`, { method: 'DELETE' });
   showToast('Removed from wishlist', 'info');
 }
 
@@ -927,7 +868,7 @@ function renderUserState() {
 
 function setupLoginForms() {
   const loginForm = document.getElementById('loginForm');
-  const signupForm = null;
+  const signupForm = document.getElementById('signupForm');
   const loginTab = document.getElementById('loginTab');
   const signupTab = null;
 
@@ -947,33 +888,6 @@ function setupLoginForms() {
     });
   }
 
-  // Quick Demo Login Buttons
-  const demoCustomerBtn = document.getElementById('demoCustomerBtn');
-  if (demoCustomerBtn) {
-    demoCustomerBtn.addEventListener('click', () => {
-      const emailInput = document.getElementById('loginEmail');
-      const passInput = document.getElementById('loginPassword');
-      if (emailInput && passInput) {
-        emailInput.value = 'demo@rammenswear.com';
-        passInput.value = 'demo1234';
-        if (loginForm) loginForm.requestSubmit();
-      }
-    });
-  }
-
-  const demoAdminBtn = document.getElementById('demoAdminBtn');
-  if (demoAdminBtn) {
-    demoAdminBtn.addEventListener('click', () => {
-      const emailInput = document.getElementById('loginEmail');
-      const passInput = document.getElementById('loginPassword');
-      if (emailInput && passInput) {
-        emailInput.value = 'admin@rammenswear.com';
-        passInput.value = 'admin123';
-        if (loginForm) loginForm.requestSubmit();
-      }
-    });
-  }
-
   // Password Visibility Toggle
   const togglePassBtns = document.querySelectorAll('.password-toggle-btn');
   togglePassBtns.forEach((btn) => {
@@ -989,7 +903,7 @@ function setupLoginForms() {
   });
 
   if (loginForm) {
-    loginForm.addEventListener('submit', (event) => {
+    loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const email = document.getElementById('loginEmail').value.trim().toLowerCase();
       const password = document.getElementById('loginPassword').value.trim();
@@ -999,24 +913,26 @@ function setupLoginForms() {
         return;
       }
 
-      const users = readJSON(STORAGE_KEYS.USERS, DEFAULT_USERS);
-      const user = users.find((candidate) => candidate.email.toLowerCase() === email);
-
-      if (!user || user.password !== password) {
-        showToast('Invalid email or password', 'danger');
-        return;
+      const submitButton = loginForm.querySelector('button[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
+      try {
+        const result = await apiRequest('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        setSession(result.user, result.token);
+        showToast(`Welcome back, ${result.user.name}!`, 'success');
+        setTimeout(() => { window.location.href = result.user.role === 'admin' ? 'admin.html' : 'index.html'; }, 500);
+      } catch (error) {
+        showToast(error.message || 'Invalid email or password', 'danger');
+      } finally {
+        if (submitButton) submitButton.disabled = false;
       }
-
-      setSession({ id: user.id, name: user.name, email: user.email, role: user.role });
-      showToast(`Welcome back, ${user.name}!`, 'success');
-      setTimeout(() => {
-        window.location.href = user.role === 'admin' ? 'admin.html' : 'index.html';
-      }, 500);
     });
   }
 
   if (signupForm) {
-    signupForm.addEventListener('submit', (event) => {
+    signupForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const name = document.getElementById('signupName').value.trim();
       const email = document.getElementById('signupEmail').value.trim().toLowerCase();
@@ -1038,21 +954,21 @@ function setupLoginForms() {
         return;
       }
 
-      const users = readJSON(STORAGE_KEYS.USERS, DEFAULT_USERS);
-      if (users.some((candidate) => candidate.email.toLowerCase() === email)) {
-        showToast('An account with this email already exists', 'warning');
-        return;
+      const submitButton = signupForm.querySelector('button[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
+      try {
+        const result = await apiRequest('/auth/signup', {
+          method: 'POST',
+          body: JSON.stringify({ name, email, password })
+        });
+        setSession(result.user, result.token);
+        showToast('Account created successfully!', 'success');
+        setTimeout(() => { window.location.href = 'index.html'; }, 500);
+      } catch (error) {
+        showToast(error.message || 'Could not create account', 'danger');
+      } finally {
+        if (submitButton) submitButton.disabled = false;
       }
-
-      const newUser = { id: nextId(users), name, email, password, role: 'customer' };
-      users.push(newUser);
-      writeJSON(STORAGE_KEYS.USERS, users);
-
-      setSession({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
-      showToast('Account created successfully!', 'success');
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 500);
     });
   }
 }
@@ -1190,16 +1106,16 @@ function renderProductGrid() {
 
 function bindProductActions() {
   document.querySelectorAll('.add-to-cart-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      addToCart(Number(button.dataset.id), 1);
+    button.addEventListener('click', async () => {
+      await addToCart(Number(button.dataset.id), 1);
     });
   });
 
   document.querySelectorAll('.wishlist-btn').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const id = Number(button.dataset.id);
       const icon = button.querySelector('i');
-      const nowInWishlist = toggleWishlist(id);
+      const nowInWishlist = await toggleWishlist(id);
       if (nowInWishlist === null) return;
       icon.className = nowInWishlist ? 'bi bi-heart-fill text-danger' : 'bi bi-heart';
       if (nowInWishlist) {
@@ -1232,7 +1148,7 @@ function bindProductActions() {
       const close = () => modal.classList.remove('is-open');
       modal.querySelector('.quick-view-close').addEventListener('click', close);
       modal.querySelector('.quick-view-backdrop').addEventListener('click', close);
-      modal.querySelector('.quick-view-add').addEventListener('click', () => { addToCart(product.id); close(); });
+      modal.querySelector('.quick-view-add').addEventListener('click', async () => { await addToCart(product.id); close(); });
     });
   });
 }
@@ -1249,7 +1165,7 @@ function updateWishlistButtons() {
 
 // ---------------- cart page ----------------
 
-function renderCartPage() {
+async function renderCartPage() {
   const cartContainer = document.getElementById('cartItemsContainer');
   const summaryContainer = document.getElementById('cartSummary');
 
@@ -1373,17 +1289,17 @@ function renderCartPage() {
 
   // Quantity Stepper Events
   document.querySelectorAll('.quantity-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      updateQuantity(button.dataset.itemId, Number(button.dataset.change));
-      renderCartPage();
+    button.addEventListener('click', async () => {
+      await updateQuantity(button.dataset.itemId, Number(button.dataset.change));
+      await renderCartPage();
     });
   });
 
   // Remove Item Events
   document.querySelectorAll('.remove-cart-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      removeFromCart(button.dataset.itemId);
-      renderCartPage();
+    button.addEventListener('click', async () => {
+      await removeFromCart(button.dataset.itemId);
+      await renderCartPage();
     });
   });
 
@@ -1412,7 +1328,7 @@ function renderCartPage() {
 
 // ---------------- wishlist page ----------------
 
-function renderWishlistPage() {
+async function renderWishlistPage() {
   const container = document.getElementById('wishlistContainer');
   if (!container) return;
 
@@ -1480,24 +1396,24 @@ function renderWishlistPage() {
   `).join('');
 
   document.querySelectorAll('.add-to-cart-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      addToCart(Number(button.dataset.id), 1);
-      removeFromWishlist(Number(button.dataset.id));
-      renderWishlistPage();
+    button.addEventListener('click', async () => {
+      await addToCart(Number(button.dataset.id), 1);
+      await removeFromWishlist(Number(button.dataset.id));
+      await renderWishlistPage();
     });
   });
 
   document.querySelectorAll('.remove-wishlist-btn, .wishlist-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      removeFromWishlist(Number(button.dataset.id));
-      renderWishlistPage();
+    button.addEventListener('click', async () => {
+      await removeFromWishlist(Number(button.dataset.id));
+      await renderWishlistPage();
     });
   });
 }
 
 // ---------------- checkout page ----------------
 
-function setupCheckoutPage() {
+async function setupCheckoutPage() {
   const form = document.getElementById('checkoutForm');
   const summary = document.getElementById('checkoutSummary');
 
@@ -1585,7 +1501,7 @@ function setupCheckoutPage() {
     });
   });
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     if (!form.checkValidity()) {
@@ -1600,54 +1516,35 @@ function setupCheckoutPage() {
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Placing Order...';
     }
 
-    const currentUser = getCurrentUser();
-    const finalTotals = calculateCartTotal();
-    const orders = readJSON(STORAGE_KEYS.ORDERS, []);
-    const orderId = `ORD${Date.now().toString().slice(-7)}`;
-
     const paymentMethod = paymentInput ? paymentInput.value : (formData.get('payment') || 'UPI');
-
-    const order = {
-      orderId,
-      userId: currentUser.id,
-      user: { name: currentUser.name, email: currentUser.email },
-      items: cartItems.map((item) => ({
-        name: item.name,
-        qty: item.qty,
-        price: item.price,
-        image: item.image,
-        size: item.size || 'M',
-        color: item.color || 'Standard'
-      })),
-      address: {
-        name: formData.get('name'),
-        phone: formData.get('phone'),
-        address: formData.get('address'),
-        city: formData.get('city'),
-        pincode: formData.get('pincode')
-      },
-      paymentMethod,
-      total: finalTotals.total,
-      subtotal: finalTotals.subtotal,
-      discount: finalTotals.discount,
-      status: 'Placed',
-      createdAt: new Date().toISOString()
-    };
-
-    orders.push(order);
-    writeJSON(STORAGE_KEYS.ORDERS, orders);
-
-    cartItems = [];
-    saveCart();
-    renderCartBadge();
-
-    window.location.href = `order-confirmation.html?orderId=${order.orderId}`;
+    try {
+      const order = await apiRequest('/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: formData.get('name'),
+          phone: formData.get('phone'),
+          address: formData.get('address'),
+          city: formData.get('city'),
+          pincode: formData.get('pincode'),
+          payment: paymentMethod
+        })
+      });
+      cartItems = [];
+      renderCartBadge();
+      window.location.href = `order-confirmation.html?orderId=${encodeURIComponent(order.orderId)}`;
+    } catch (error) {
+      showToast(error.message || 'Could not place the order', 'danger');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Confirm & Place Order</span> <i class="bi bi-shield-check ms-1"></i>';
+      }
+    }
   });
 }
 
 // ---------------- orders pages ----------------
 
-function renderOrdersPage() {
+async function renderOrdersPage() {
   const container = document.getElementById('ordersContainer');
   if (!container) return;
 
@@ -1663,8 +1560,7 @@ function renderOrdersPage() {
     return;
   }
 
-  const currentUser = getCurrentUser();
-  const orders = readJSON(STORAGE_KEYS.ORDERS, []).filter((order) => order.userId === currentUser.id);
+  const orders = await apiRequest('/orders');
 
   if (!orders.length) {
     container.innerHTML = `
@@ -1743,7 +1639,7 @@ function renderOrdersPage() {
   }).join('');
 }
 
-function renderOrderConfirmation() {
+async function renderOrderConfirmation() {
   const container = document.getElementById('confirmationDetails');
   if (!container) return;
 
@@ -1755,11 +1651,13 @@ function renderOrderConfirmation() {
     return;
   }
 
-  const orders = readJSON(STORAGE_KEYS.ORDERS, []);
-  const currentUser = getCurrentUser();
-  const order = orders.find(
-    (candidate) => candidate.orderId === orderId && candidate.userId === (currentUser ? currentUser.id : candidate.userId)
-  );
+  let order;
+  try {
+    order = await apiRequest(`/orders/${encodeURIComponent(orderId)}`);
+  } catch (error) {
+    container.innerHTML = `<div class="alert alert-warning">${escapeHtml(error.message || 'Order not found.')}</div>`;
+    return;
+  }
 
   if (!order) {
     container.innerHTML = '<div class="alert alert-warning">Order not found.</div>';
@@ -1944,11 +1842,16 @@ function setupGlobalSearch() {
 
 // ---------------- boot ----------------
 
-document.addEventListener('DOMContentLoaded', () => {
-  ensureSeedData();
-  loadProducts();
-  loadCart();
-  loadWishlist();
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadProducts();
+    await loadCart();
+    await loadWishlist();
+  } catch (error) {
+    showToast(error.message || 'Could not connect to the store API', 'danger');
+    const productGrid = document.getElementById('productGrid');
+    if (productGrid) productGrid.innerHTML = '<div class="col-12 alert alert-danger">The store API is unavailable. Please try again shortly.</div>';
+  }
   renderCartBadge();
   renderUserState();
   setupGlobalSearch();

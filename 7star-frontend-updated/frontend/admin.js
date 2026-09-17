@@ -1,34 +1,39 @@
-// ============================================================
-// RAM MENS WEAR — Admin panel (localStorage-backed, no server needed)
-// ============================================================
-
-const STORAGE_KEYS = {
-  PRODUCTS: 'seven_products',
-  USERS: 'seven_users',
-  CURRENT_USER: 'seven_current_user',
-  ORDERS: 'seven_orders'
-};
+const API_BASE = window.RAM_API_BASE || (window.location.protocol === 'file:'
+  ? 'http://localhost:5000/api'
+  : `${window.location.protocol}//${window.location.hostname}:5000/api`);
+const TOKEN_KEY = 'ram_auth_token';
+const USER_KEY = 'seven_current_user';
 
 let products = [];
 let orders = [];
-const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+let users = [];
 let productQuery = '';
 
-function readJSON(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch (error) {
-    return fallback;
-  }
-}
-
-function writeJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 function getUser() {
-  return readJSON(STORAGE_KEYS.CURRENT_USER, null);
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+  } catch (error) {
+    return null;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>'"]/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[character]));
+}
+
+async function apiRequest(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (getToken()) headers.Authorization = `Bearer ${getToken()}`;
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.message || `Request failed (${response.status})`);
+  return body;
 }
 
 function showAlert(message, type = 'danger') {
@@ -41,7 +46,7 @@ function showAlert(message, type = 'danger') {
 
 function requireAdmin() {
   const user = getUser();
-  if (!user || user.role !== 'admin') {
+  if (!getToken() || !user || user.role !== 'admin') {
     window.location.href = 'login.html';
     return false;
   }
@@ -49,58 +54,41 @@ function requireAdmin() {
 }
 
 function renderProducts() {
-  const body = document.getElementById('productsTableBody');
-  const emptyState = document.getElementById('emptyState');
   const visibleProducts = products.filter((product) => `${product.name} ${product.category}`.toLowerCase().includes(productQuery));
   document.getElementById('productCount').textContent = `${visibleProducts.length}/${products.length}`;
-  emptyState.classList.toggle('d-none', visibleProducts.length > 0);
-  body.innerHTML = visibleProducts.map((product) => `
+  document.getElementById('emptyState').classList.toggle('d-none', visibleProducts.length > 0);
+  document.getElementById('productsTableBody').innerHTML = visibleProducts.map((product) => `
     <tr>
       <td><div class="d-flex align-items-center gap-3"><img class="admin-product-thumb" src="${escapeHtml(product.image || '')}" alt="${escapeHtml(product.name)}"><div><div class="fw-semibold">${escapeHtml(product.name)}</div><small class="text-secondary">ID #${product.id}</small></div></div></td>
-      <td>${escapeHtml(product.category)}</td>
-      <td>₹${Number(product.price).toLocaleString('en-IN')}</td>
+      <td>${escapeHtml(product.category)}</td><td>₹${Number(product.price).toLocaleString('en-IN')}</td>
       <td>${Number(product.discountPercent || 0)}%</td>
       <td class="text-end text-nowrap"><button class="btn btn-sm btn-light me-1" data-edit-id="${product.id}" title="Edit product"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" data-delete-id="${product.id}" title="Delete product"><i class="bi bi-trash"></i></button></td>
     </tr>
   `).join('');
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-}
-
-function loadProducts() {
-  products = readJSON(STORAGE_KEYS.PRODUCTS, []);
-  renderProducts();
-}
-
-function saveProducts() {
-  writeJSON(STORAGE_KEYS.PRODUCTS, products);
-}
-
-function loadOrders() {
-  orders = readJSON(STORAGE_KEYS.ORDERS, []);
-  renderOrders();
-  renderDashboard();
-}
-
 function renderOrders() {
-  const body = document.getElementById('ordersTableBody');
-  const emptyState = document.getElementById('ordersEmptyState');
   document.getElementById('orderCount').textContent = orders.length;
-  emptyState.classList.toggle('d-none', orders.length > 0);
-  body.innerHTML = orders
-    .slice()
-    .reverse()
-    .map((order) => {
-      const itemCount = order.items.reduce((total, item) => total + Number(item.qty || 0), 0);
-      const customer = order.user?.name || order.address?.name || 'Guest';
-      const email = order.user?.email || '';
-      const date = new Date(order.createdAt).toLocaleDateString('en-IN');
-      const status = order.status || 'Placed';
-      return `<tr><td><strong>${escapeHtml(order.orderId)}</strong><br><small class="text-secondary">${escapeHtml(order.address?.city || '')}</small></td><td>${escapeHtml(customer)}<br><small class="text-secondary">${escapeHtml(email)}</small></td><td>${itemCount}</td><td>₹${Number(order.total || 0).toLocaleString('en-IN')}</td><td>${escapeHtml(order.paymentMethod || 'COD')}</td><td><select class="form-select form-select-sm order-status" data-order-id="${escapeHtml(order.orderId)}"><option ${status === 'Placed' ? 'selected' : ''}>Placed</option><option ${status === 'Packed' ? 'selected' : ''}>Packed</option><option ${status === 'Shipped' ? 'selected' : ''}>Shipped</option><option ${status === 'Delivered' ? 'selected' : ''}>Delivered</option><option ${status === 'Cancelled' ? 'selected' : ''}>Cancelled</option></select></td><td>${date}</td></tr>`;
-    })
-    .join('');
+  document.getElementById('pendingOrderCount').textContent = `${orders.filter((order) => !['Delivered', 'Cancelled'].includes(order.status)).length} pending`;
+  document.getElementById('ordersEmptyState').classList.toggle('d-none', orders.length > 0);
+  document.getElementById('ordersTableBody').innerHTML = orders.map((order) => {
+    const itemCount = (order.items || []).reduce((total, item) => total + Number(item.qty || 0), 0);
+    const customer = order.user?.name || order.address?.name || 'Customer';
+    return `<tr><td><strong>${escapeHtml(order.orderId)}</strong><br><small>${escapeHtml(order.address?.city || '')}</small></td><td>${escapeHtml(customer)}<br><small>${escapeHtml(order.user?.email || '')}</small></td><td>${itemCount}</td><td>₹${Number(order.total || 0).toLocaleString('en-IN')}</td><td>${escapeHtml(order.paymentMethod || 'COD')}</td><td><select class="form-select form-select-sm order-status" data-order-id="${escapeHtml(order.orderId)}"><option ${order.status === 'Placed' ? 'selected' : ''}>Placed</option><option ${order.status === 'Packed' ? 'selected' : ''}>Packed</option><option ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option><option ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option><option ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option></select></td><td>${new Date(order.createdAt).toLocaleDateString('en-IN')}</td></tr>`;
+  }).join('');
+}
+
+function renderCustomers() {
+  const customers = users.filter((user) => user.role !== 'admin');
+  document.getElementById('statCustomers').textContent = customers.length.toLocaleString('en-IN');
+  document.getElementById('customersTableBody').innerHTML = customers.map((user) => `<tr><td class="fw-semibold">${escapeHtml(user.name)}</td><td>${escapeHtml(user.email)}</td><td><span class="badge text-bg-light">${escapeHtml(user.role || 'customer')}</span></td><td>${orders.filter((order) => order.user?._id === user.id || order.user?.id === user.id).length}</td></tr>`).join('');
+}
+
+function renderDashboard() {
+  document.getElementById('statProducts').textContent = products.length.toLocaleString('en-IN');
+  document.getElementById('statOrders').textContent = orders.length.toLocaleString('en-IN');
+  document.getElementById('statRevenue').textContent = `₹${orders.reduce((total, order) => total + Number(order.total || 0), 0).toLocaleString('en-IN')}`;
+  renderCustomers();
 }
 
 function fillForm(product = {}) {
@@ -119,14 +107,8 @@ function fillForm(product = {}) {
 
 function updateImagePreview(source) {
   const preview = document.getElementById('imagePreview');
-  if (!source) {
-    preview.removeAttribute('src');
-    preview.classList.add('d-none');
-    return;
-  }
-  preview.src = source;
-  preview.classList.remove('d-none');
-  preview.onerror = () => preview.classList.add('d-none');
+  preview.classList.toggle('d-none', !source);
+  if (source) preview.src = source;
 }
 
 function formData() {
@@ -143,147 +125,69 @@ function formData() {
   };
 }
 
-function nextId(list) {
-  return list.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
-}
-
-document.getElementById('addProductBtn').addEventListener('click', () => {
-  document.getElementById('modalTitle').textContent = 'Add product';
-  fillForm();
-  productModal.show();
-});
-
-document.getElementById('refreshBtn').addEventListener('click', loadProducts);
-document.getElementById('refreshOrdersBtn').addEventListener('click', loadOrders);
-document.getElementById('adminProductSearch').addEventListener('input', (event) => {
-  productQuery = event.target.value.trim().toLowerCase();
+async function refreshAll() {
+  [products, orders, users] = await Promise.all([
+    apiRequest('/products'),
+    apiRequest('/orders/admin/all'),
+    apiRequest('/auth/admin/users')
+  ]);
   renderProducts();
-});
-document.getElementById('ordersTableBody').addEventListener('change', (event) => {
-  if (!event.target.matches('.order-status')) return;
-  const order = orders.find((item) => item.orderId === event.target.dataset.orderId);
-  if (!order) return;
-  order.status = event.target.value;
-  writeJSON(STORAGE_KEYS.ORDERS, orders);
+  renderOrders();
   renderDashboard();
-  showAlert('Order status updated.', 'success');
-});
-document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-  writeJSON('ram_store_settings', {
-    name: document.getElementById('storeNameSetting').value.trim() || 'RAM MENS WEAR',
-    freeDeliveryAbove: Number(document.getElementById('freeDeliverySetting').value) || 3000
-  });
-  showAlert('Store settings saved.', 'success');
-});
-document.getElementById('createCustomerForm').addEventListener('submit', (event) => {
-  event.preventDefault();
-  const name = document.getElementById('customerName').value.trim();
-  const email = document.getElementById('customerEmail').value.trim().toLowerCase();
-  const password = document.getElementById('customerPassword').value.trim();
-  if (!name || !email || password.length < 6) {
-    showAlert('Enter a name, valid email, and password with at least 6 characters.');
-    return;
-  }
-  const users = readJSON(STORAGE_KEYS.USERS, []);
-  if (users.some((user) => user.email.toLowerCase() === email)) {
-    showAlert('An account with this email already exists.');
-    return;
-  }
-  users.push({ id: nextId(users), name, email, password, role: 'customer' });
-  writeJSON(STORAGE_KEYS.USERS, users);
-  event.target.reset();
-  renderDashboard();
-  showAlert('Customer account created successfully.', 'success');
-});
-document.getElementById('productImage').addEventListener('input', (event) => updateImagePreview(event.target.value.trim()));
-document.getElementById('productImageFile').addEventListener('change', (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) {
-    showAlert('Please choose an image smaller than 5 MB.');
-    event.target.value = '';
-    return;
-  }
-  const reader = new FileReader();
-  reader.addEventListener('load', () => {
-    document.getElementById('productImage').value = reader.result;
-    updateImagePreview(reader.result);
-  });
-  reader.readAsDataURL(file);
-});
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-  window.location.href = 'login.html';
-});
+}
 
-document.getElementById('productsTableBody').addEventListener('click', (event) => {
-  const editButton = event.target.closest('[data-edit-id]');
-  const deleteButton = event.target.closest('[data-delete-id]');
-  if (editButton) {
-    const product = products.find((item) => item.id === Number(editButton.dataset.editId));
-    document.getElementById('modalTitle').textContent = 'Edit product';
-    fillForm(product);
-    productModal.show();
-  }
-  if (deleteButton) {
-    const product = products.find((item) => item.id === Number(deleteButton.dataset.deleteId));
-    if (!window.confirm(`Delete ${product.name}?`)) return;
-    products = products.filter((item) => item.id !== product.id);
-    saveProducts();
-    showAlert('Product deleted.', 'success');
-    renderProducts();
-  }
-});
-
-document.getElementById('productForm').addEventListener('submit', (event) => {
-  event.preventDefault();
-  const id = document.getElementById('productId').value;
-  const button = document.getElementById('saveProductBtn');
-  button.disabled = true;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAdmin()) return;
+  const productModal = new bootstrap.Modal(document.getElementById('productModal'));
   try {
-    const data = formData();
-    if (!data.name || !data.category || !data.price) {
-      throw new Error('Please fill in the required fields.');
-    }
-    if (id) {
-      products = products.map((item) => (item.id === Number(id) ? { ...item, ...data, id: item.id } : item));
-      showAlert('Product updated.', 'success');
-    } else {
-      products.push({ ...data, id: nextId(products) });
-      showAlert('Product added.', 'success');
-    }
-    saveProducts();
-    productModal.hide();
-    renderProducts();
+    const session = await apiRequest('/auth/me');
+    if (session.user.role !== 'admin') throw new Error('Admin access required');
+    await refreshAll();
   } catch (error) {
-    showAlert(error.message);
-  } finally {
-    button.disabled = false;
+    showAlert(error.message || 'Could not load admin data');
   }
+
+  document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+  document.getElementById('refreshOrdersBtn').addEventListener('click', refreshAll);
+  document.getElementById('adminProductSearch').addEventListener('input', (event) => { productQuery = event.target.value.trim().toLowerCase(); renderProducts(); });
+  document.getElementById('addProductBtn').addEventListener('click', () => { document.getElementById('modalTitle').textContent = 'Add Product'; fillForm(); productModal.show(); });
+  document.getElementById('logoutBtn').addEventListener('click', () => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); window.location.href = 'login.html'; });
+  document.getElementById('productImage').addEventListener('input', (event) => updateImagePreview(event.target.value.trim()));
+
+  document.getElementById('productsTableBody').addEventListener('click', async (event) => {
+    const editButton = event.target.closest('[data-edit-id]');
+    const deleteButton = event.target.closest('[data-delete-id]');
+    if (editButton) { const product = products.find((item) => item.id === Number(editButton.dataset.editId)); document.getElementById('modalTitle').textContent = 'Edit Product'; fillForm(product); productModal.show(); }
+    if (deleteButton) {
+      const product = products.find((item) => item.id === Number(deleteButton.dataset.deleteId));
+      if (!product || !window.confirm(`Delete ${product.name}?`)) return;
+      try { await apiRequest(`/products/${product.id}`, { method: 'DELETE' }); await refreshAll(); showAlert('Product deleted.', 'success'); } catch (error) { showAlert(error.message); }
+    }
+  });
+
+  document.getElementById('productForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const id = document.getElementById('productId').value;
+    const button = document.getElementById('saveProductBtn');
+    button.disabled = true;
+    try {
+      const response = await apiRequest(id ? `/products/${id}` : '/products', { method: id ? 'PUT' : 'POST', body: JSON.stringify(formData()) });
+      productModal.hide();
+      await refreshAll();
+      showAlert(id ? 'Product updated.' : `Product ${response.name} added.`, 'success');
+    } catch (error) { showAlert(error.message); } finally { button.disabled = false; }
+  });
+
+  document.getElementById('ordersTableBody').addEventListener('change', async (event) => {
+    if (!event.target.matches('.order-status')) return;
+    try { await apiRequest(`/orders/${encodeURIComponent(event.target.dataset.orderId)}/status`, { method: 'PUT', body: JSON.stringify({ status: event.target.value }) }); await refreshAll(); showAlert('Order status updated.', 'success'); } catch (error) { showAlert(error.message); }
+  });
+
+  document.getElementById('createCustomerForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      await apiRequest('/auth/signup', { method: 'POST', body: JSON.stringify({ name: document.getElementById('customerName').value.trim(), email: document.getElementById('customerEmail').value.trim().toLowerCase(), password: document.getElementById('customerPassword').value }) });
+      event.target.reset(); await refreshAll(); showAlert('Customer account created.', 'success');
+    } catch (error) { showAlert(error.message); }
+  });
 });
-
-function renderDashboard() {
-  const users = readJSON(STORAGE_KEYS.USERS, []);
-  document.getElementById('statProducts').textContent = products.length.toLocaleString('en-IN');
-  document.getElementById('statOrders').textContent = orders.length.toLocaleString('en-IN');
-  document.getElementById('statRevenue').textContent = `₹${orders.reduce((total, order) => total + Number(order.total || 0), 0).toLocaleString('en-IN')}`;
-  document.getElementById('statCustomers').textContent = users.filter((user) => user.role !== 'admin').length.toLocaleString('en-IN');
-  document.getElementById('pendingOrderCount').textContent = `${orders.filter((order) => !['Delivered', 'Cancelled'].includes(order.status)).length} pending`;
-  document.getElementById('customersTableBody').innerHTML = users.filter((user) => user.role !== 'admin').map((user) => {
-    const count = orders.filter((order) => order.userId === user.id).length;
-    return `<tr><td class="fw-semibold">${escapeHtml(user.name)}</td><td>${escapeHtml(user.email)}</td><td><span class="badge text-bg-light">${escapeHtml(user.role || 'customer')}</span></td><td>${count}</td></tr>`;
-  }).join('');
-}
-
-function loadSettings() {
-  const settings = readJSON('ram_store_settings', { name: 'RAM MENS WEAR', freeDeliveryAbove: 3000 });
-  document.getElementById('storeNameSetting').value = settings.name || 'RAM MENS WEAR';
-  document.getElementById('freeDeliverySetting').value = settings.freeDeliveryAbove || 3000;
-}
-
-if (requireAdmin()) {
-  loadProducts();
-  loadOrders();
-  renderDashboard();
-  loadSettings();
-}

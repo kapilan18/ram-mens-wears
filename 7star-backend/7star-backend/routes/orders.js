@@ -78,6 +78,26 @@ router.get('/admin/all', requireAdmin, async (req, res) => {
   }
 });
 
+router.put('/:orderId/status', requireAdmin, async (req, res) => {
+  try {
+    const allowedStatuses = ['Placed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
+    const { status } = req.body;
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid order status' });
+    }
+
+    const order = await Order.findOneAndUpdate(
+      { orderId: req.params.orderId },
+      { status },
+      { new: true }
+    ).populate('user', 'name email');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update order status', error: error.message });
+  }
+});
+
 // GET /api/orders/:orderId
 router.get('/:orderId', async (req, res) => {
   try {
