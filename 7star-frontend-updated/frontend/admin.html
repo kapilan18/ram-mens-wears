@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAM MENS WEAR | Admin Management Center</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="custom.css">
+    <!-- Dedicated admin console styles (scoped to body[data-page="admin"], storefront is untouched) -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body data-page="admin" class="bg-light">
+
+<!-- ================= TOP HEADER ================= -->
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container-fluid px-4">
+        <a class="brand-mark-wrapper" href="admin.html">
+            <div class="brand-logo-icon">R</div>
+            <div>
+                <span class="brand-title">RAM CONTROL</span>
+                <span class="brand-subtitle">Executive Dashboard</span>
+            </div>
+        </a>
+
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-secondary-modern btn-sm" href="index.html" target="_blank">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Live Storefront
+            </a>
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-3" id="logoutBtn">
+                <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- ================= MAIN ADMIN SHELL ================= -->
+<main class="admin-shell">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="text-uppercase small fw-bold text-muted mb-3" style="font-size: 0.72rem; letter-spacing: 0.12em;">Workspace Navigation</div>
+        <nav class="nav flex-column">
+            <a class="admin-nav-item active" href="#overview"><i class="bi bi-grid-1x2"></i> Overview</a>
+            <a class="admin-nav-item" href="#catalogue"><i class="bi bi-box-seam"></i> Catalog</a>
+            <a class="admin-nav-item" href="#ordersSection"><i class="bi bi-receipt"></i> Orders</a>
+            <a class="admin-nav-item" href="#customersSection"><i class="bi bi-people"></i> Customers</a>
+            <a class="admin-nav-item" href="#storeSettings"><i class="bi bi-sliders"></i> Settings</a>
+        </nav>
+
+        <div class="mt-auto pt-4 border-top border-secondary border-opacity-25 small text-muted">
+            <div class="fw-bold text-white">RAM MENS WEAR</div>
+            <div>Version 2.0 &bull; 2026</div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="admin-content-area">
+        <!-- Top Title Bar -->
+        <div class="admin-page-header" id="overview">
+            <div>
+                <span class="text-uppercase small fw-bold text-primary letter-spacing-1">Store Overview</span>
+                <h1 class="h3 fw-bold mb-1">Executive Dashboard</h1>
+                <p class="text-muted small mb-0">Manage catalog products, live customer orders, customer records, and store settings.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-brand btn-sm" id="addProductBtn" type="button">
+                    <i class="bi bi-plus-lg me-1"></i> Add New Product
+                </button>
+            </div>
+        </div>
+
+        <div id="adminAlert" class="alert d-none rounded-3 shadow-sm mb-4" role="alert"></div>
+
+        <!-- KPI Metric Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="text-muted small fw-bold">Live Catalog</span>
+                            <h2 class="h3 fw-bold my-1" id="statProducts">0</h2>
+                            <span class="text-success small fw-semibold"><i class="bi bi-check2"></i> Active items</span>
+                        </div>
+                        <div class="stat-icon-square bg-primary-subtle text-primary">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="text-muted small fw-bold">Customer Orders</span>
+                            <h2 class="h3 fw-bold my-1" id="statOrders">0</h2>
+                            <span class="text-primary small fw-semibold"><i class="bi bi-bag-check"></i> Total placed</span>
+                        </div>
+                        <div class="stat-icon-square bg-success-subtle text-success">
+                            <i class="bi bi-bag-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="text-muted small fw-bold">Gross Revenue</span>
+                            <h2 class="h3 fw-bold my-1" id="statRevenue">₹0</h2>
+                            <span class="text-warning small fw-semibold"><i class="bi bi-graph-up"></i> Sales volume</span>
+                        </div>
+                        <div class="stat-icon-square bg-warning-subtle text-warning">
+                            <i class="bi bi-currency-rupee"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-xl-3">
+                <div class="admin-stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="text-muted small fw-bold">Registered Members</span>
+                            <h2 class="h3 fw-bold my-1" id="statCustomers">0</h2>
+                            <span class="text-info small fw-semibold"><i class="bi bi-person-check"></i> Verified VIPs</span>
+                        </div>
+                        <div class="stat-icon-square bg-info-subtle text-info">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Catalogue Panel -->
+        <section class="admin-table-card mb-4" id="catalogue">
+            <div class="d-flex justify-content-between align-items-center p-3 p-md-4 border-bottom flex-wrap gap-2">
+                <div>
+                    <h2 class="h5 fw-bold mb-0">
+                        <i class="bi bi-box-seam text-muted"></i> Product Catalog <span class="badge bg-light text-dark border ms-1" id="productCount">0</span>
+                    </h2>
+                </div>
+                <div class="d-flex gap-2">
+                    <input class="form-control form-control-sm" id="adminProductSearch" placeholder="Search catalog..." style="max-width: 220px; border-radius: 9999px;">
+                    <button class="btn btn-light btn-sm border" id="refreshBtn" type="button" title="Refresh Products">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Product</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Discount</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody"></tbody>
+                </table>
+            </div>
+            <div id="emptyState" class="text-center text-muted py-5 d-none">
+                <i class="bi bi-search fs-2 mb-2 d-block"></i>
+                No matching products found in catalog.
+            </div>
+        </section>
+
+        <!-- Customer Orders Panel -->
+        <section class="admin-table-card mb-4" id="ordersSection">
+            <div class="d-flex justify-content-between align-items-center p-3 p-md-4 border-bottom flex-wrap gap-2">
+                <h2 class="h5 fw-bold mb-0">
+                    <i class="bi bi-receipt text-muted"></i> Customer Orders <span class="badge bg-light text-dark border ms-1" id="orderCount">0</span>
+                </h2>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning-subtle text-warning-emphasis px-3 py-2 rounded-pill" id="pendingOrderCount">0 pending</span>
+                    <button class="btn btn-light btn-sm border" id="refreshOrdersBtn" type="button" title="Refresh Orders">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Order ID</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Status Control</th>
+                            <th class="pe-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </div>
+            <div id="ordersEmptyState" class="text-center text-muted py-5 d-none">
+                <i class="bi bi-receipt fs-2 mb-2 d-block"></i>
+                No customer orders received yet.
+            </div>
+        </section>
+
+        <!-- Customers Panel -->
+        <section class="admin-table-card mb-4" id="customersSection">
+            <div class="p-3 p-md-4 border-bottom">
+                <h2 class="h5 fw-bold mb-1"><i class="bi bi-people text-muted"></i> Registered Accounts</h2>
+                <p class="text-muted small mb-0">View registered accounts and buying activity.</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Name</th>
+                            <th>Email Address</th>
+                            <th>Role</th>
+                            <th class="pe-4">Orders Placed</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="admin-table-card mb-4" id="createCustomerSection">
+            <div class="p-3 p-md-4 border-bottom">
+                <h2 class="h5 fw-bold mb-1"><i class="bi bi-person-plus text-muted"></i> Create Customer Account</h2>
+                <p class="text-muted small mb-0">Only administrators can create customer login accounts.</p>
+            </div>
+            <form id="createCustomerForm" class="p-3 p-md-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4"><label class="form-label small fw-bold text-muted" for="customerName">Full Name</label><input id="customerName" class="form-control" required></div>
+                    <div class="col-md-4"><label class="form-label small fw-bold text-muted" for="customerEmail">Email Address</label><input id="customerEmail" type="email" class="form-control" required></div>
+                    <div class="col-md-3"><label class="form-label small fw-bold text-muted" for="customerPassword">Temporary Password</label><input id="customerPassword" type="password" minlength="6" class="form-control" required></div>
+                    <div class="col-md-1"><button class="btn btn-brand w-100" type="submit" title="Create account"><i class="bi bi-person-plus"></i></button></div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Store Settings Panel -->
+        <section class="admin-table-card mb-4" id="storeSettings">
+            <div class="p-3 p-md-4 border-bottom">
+                <h2 class="h5 fw-bold mb-1"><i class="bi bi-sliders text-muted"></i> Storefront Configuration</h2>
+                <p class="text-muted small mb-0">Control store rules and delivery thresholds.</p>
+            </div>
+            <div class="p-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Store Brand Name</label>
+                        <input class="form-control" value="RAM MENS WEAR" id="storeNameSetting">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Free Delivery Threshold (₹)</label>
+                        <input class="form-control" type="number" value="3000" id="freeDeliverySetting">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-brand w-100" id="saveSettingsBtn">Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- ================= PRODUCT MODAL ================= -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom py-3">
+                <h2 class="modal-title h5 fw-bold mb-0" id="modalTitle">Add Product</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="productForm" novalidate>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="productId">
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold text-muted" for="productName">Product Name</label>
+                            <input class="form-control" id="productName" placeholder="e.g. Classic Oxford Cotton Shirt" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted" for="productCategory">Category</label>
+                            <select class="form-select" id="productCategory" required>
+                                <option value="">Select Category</option>
+                                <option>Shirts</option>
+                                <option>Jeans</option>
+                                <option>T-Shirts</option>
+                                <option>Shoes</option>
+                                <option>Accessories</option>
+                                <option>Caps</option>
+                                <option>Bags</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted" for="productPrice">Price (₹)</label>
+                            <input class="form-control" id="productPrice" type="number" min="0" step="1" placeholder="1499" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted" for="productOldPrice">Original Price (₹)</label>
+                            <input class="form-control" id="productOldPrice" type="number" min="0" step="1" placeholder="1999">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted" for="productDiscount">Discount (%)</label>
+                            <input class="form-control" id="productDiscount" type="number" min="0" max="100" value="0">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-muted" for="productImageFile">Product Image</label>
+                            <input class="form-control" id="productImageFile" type="file" accept="image/jpeg,image/png,image/webp">
+                            <div class="form-text">Choose JPG, PNG or WebP image under 5 MB. Or paste direct image URL below:</div>
+                            <input class="form-control mt-2" id="productImage" placeholder="https://images.unsplash.com/...">
+                            <img id="imagePreview" class="admin-product-thumb d-none mt-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Preview">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted" for="productRating">Rating Score (1 - 5)</label>
+                            <input class="form-control" id="productRating" type="number" min="1" max="5" step="0.1" value="4.8">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted" for="productSizes">Sizes (comma separated)</label>
+                            <input class="form-control" id="productSizes" placeholder="S, M, L, XL, XXL">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted" for="productColors">Colors (comma separated)</label>
+                            <input class="form-control" id="productColors" placeholder="Black, Navy, White">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top py-3">
+                    <button type="button" class="btn btn-secondary-modern" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-brand" id="saveProductBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="admin.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAM MENS WEAR | Luxury Men's Fashion & Apparel</title>
+    <meta name="description" content="Premium fashion and luxury apparel for the modern man. Shop high-quality shirts, jeans, t-shirts, footwear, and accessories.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="custom.css">
+</head>
+
+<body data-page="home">
+
+<div class="announcement-bar">
+    <div class="container d-flex justify-content-between align-items-center gap-3">
+        <span><i class="bi bi-stars me-1"></i> Free shipping on orders above ₹999</span>
+        <span class="d-none d-sm-inline">Need style advice? +91 98765 43210</span>
+    </div>
+</div>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+        <!-- Brand -->
+        <a class="brand-mark-wrapper" href="index.html">
+            <div class="brand-logo-icon">R</div>
+            <div>
+                <h1 class="brand-title"><i class="bi bi-award-fill brand-crown"></i> RAM MENS WEAR</h1>
+                <span class="brand-subtitle">Atelier &bull; Menswear</span>
+            </div>
+        </a>
+
+        <!-- Mobile Toggler -->
+        <button class="navbar-toggler border-0 shadow-none p-2" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-list fs-2 text-dark"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            <!-- Search Bar -->
+            <form class="d-flex mx-auto my-3 my-lg-0 search-bar-nav" role="search" id="globalSearchForm">
+                <div class="search-input-group w-100">
+                    <i class="bi bi-search search-icon"></i>
+                    <input id="globalSearchInput" class="form-control" type="search" placeholder="Search shirts, denim, footwear, accessories..." aria-label="Search">
+                </div>
+            </form>
+
+            <!-- Navigation Links -->
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+                <li class="nav-item">
+                    <a class="nav-link-custom active" href="index.html">
+                        <i class="bi bi-house-door"></i>
+                        <span>Home</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link-custom" href="products.html">
+                        <i class="bi bi-shop"></i>
+                        <span>Catalog</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link-custom position-relative" href="wishlist.html">
+                        <i class="bi bi-heart"></i>
+                        <span>Wishlist</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link-custom position-relative" href="cart.html">
+                        <i class="bi bi-bag"></i>
+                        <span>Bag</span>
+                        <span id="cartBadge" class="badge-count d-none">0</span>
+                    </a>
+                </li>
+                <li class="nav-item ms-lg-2" id="authNavItem"></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ================= MAIN CONTENT ================= -->
+<main class="py-3">
+
+    <!-- Compact Luxury Category Rail -->
+    <section class="container mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-uppercase small fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.12em;">Select Category</span>
+            <a href="products.html" class="small fw-semibold text-dark text-decoration-none">
+                All Collections <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="category-rail-wrapper">
+            <a class="category-chip-modern active" href="products.html">
+                <i class="bi bi-grid-fill chip-icon"></i>
+                <span>All Collections</span>
+                <span class="chip-badge">350</span>
+            </a>
+            <a class="category-chip-modern" href="products.html?category=Shirts">
+                <i class="bi bi-person chip-icon"></i>
+                <span>Shirts</span>
+                <span class="chip-badge">50</span>
+            </a>
+            <a class="category-chip-modern" href="products.html?category=Jeans">
+                <i class="bi bi-columns chip-icon"></i>
+                <span>Denim</span>
+                <span class="chip-badge">50</span>
+            </a>
+            <a class="category-chip-modern" href="products.html?category=T-Shirts">
+                <i class="bi bi-emoji-smile chip-icon"></i>
+                <span>T-Shirts</span>
+                <span class="chip-badge">50</span>
+            </a>
+            <a class="category-chip-modern" href="products.html?category=Shoes">
+                <i class="bi bi-lightning chip-icon"></i>
+                <span>Footwear</span>
+                <span class="chip-badge">50</span>
+            </a>
+            <a class="category-chip-modern" href="products.html?category=Accessories">
+                <i class="bi bi-watch chip-icon"></i>
+                <span>Accessories</span>
+                <span class="chip-badge">50</span>
+            </a>
+            <a class="category-chip-modern" href="products.html?category=Caps">
+                <i class="bi bi-star chip-icon"></i>
+                <span>Caps</span>
+                <span class="chip-badge">50</span>
+            </a>
+            <a class="category-chip-modern" href="products.html?category=Bags">
+                <i class="bi bi-bag chip-icon"></i>
+                <span>Luggage</span>
+                <span class="chip-badge">50</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Editorial Hero Section -->
+    <section class="container mb-5">
+        <div class="hero-wrapper">
+            <img class="hero-editorial-photo" src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1800&q=92" alt="Premium men's shirt collection" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=1800&q=92';">
+            <div class="hero-photo-shade"></div>
+            <div class="hero-content">
+                <h2 class="hero-title">
+                    Everyday shirts, made better.
+                </h2>
+                <p class="hero-subtitle">
+                    Comfortable fabrics, clean fits, and easy styles for every day.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="products.html?category=Shirts" class="btn btn-gold px-4">
+                       <span>Shop Shirts</span> <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a href="#trendingSection" class="btn btn-secondary-modern px-4 bg-white bg-opacity-10 text-white border-white border-opacity-25">
+                       <span>Trending Now</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Signature Categories -->
+    <section class="container home-category-section">
+        <div class="section-heading-row">
+            <div><span class="eyebrow-label">THE ATELIER EDIT</span><h2 class="h4 mb-0">Shop by category</h2></div>
+            <a href="products.html" class="small fw-semibold">View all <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="home-category-grid">
+            <a class="home-category-card" href="products.html?category=Shirts"><img src="https://images.unsplash.com/photo-1603252110481-7ba873bf42ab?auto=format&fit=crop&w=700&q=80" alt="Formal Shirts"><div><span>50 pieces</span><h3>Formal Shirts</h3><strong>Shop Now <i class="bi bi-arrow-up-right"></i></strong></div></a>
+            <a class="home-category-card" href="products.html?category=T-Shirts"><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80" alt="Casual T-shirts"><div><span>50 pieces</span><h3>Casual T-shirts</h3><strong>Shop Now <i class="bi bi-arrow-up-right"></i></strong></div></a>
+            <a class="home-category-card" href="products.html?category=Jeans"><img src="https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=700&q=80" alt="Denim Jeans"><div><span>50 pieces</span><h3>Denim Jeans</h3><strong>Shop Now <i class="bi bi-arrow-up-right"></i></strong></div></a>
+            <a class="home-category-card" href="products.html?category=Shoes"><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80" alt="Footwear and Accessories"><div><span>100 pieces</span><h3>Footwear &amp; Accessories</h3><strong>Shop Now <i class="bi bi-arrow-up-right"></i></strong></div></a>
+        </div>
+    </section>
+
+    <!-- Slender Luxury Trust Strip -->
+    <section class="container mb-5">
+        <div class="trust-strip-luxury">
+            <div class="row g-3 align-items-center">
+                <div class="col-6 col-lg-3">
+                    <div class="trust-item-compact">
+                        <div class="trust-icon-pill"><i class="bi bi-truck"></i></div>
+                        <div>
+                            <div class="trust-label">Free Shipping</div>
+                            <div class="trust-sub">Orders above ₹3,000</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="trust-item-compact">
+                        <div class="trust-icon-pill"><i class="bi bi-arrow-repeat"></i></div>
+                        <div>
+                            <div class="trust-label">Easy 30-Day Return</div>
+                            <div class="trust-sub">Simple doorstep exchange</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="trust-item-compact">
+                        <div class="trust-icon-pill"><i class="bi bi-patch-check"></i></div>
+                        <div>
+                            <div class="trust-label">Secure Payment</div>
+                            <div class="trust-sub">Encrypted checkout</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="trust-item-compact">
+                        <div class="trust-icon-pill"><i class="bi bi-shield-check"></i></div>
+                        <div>
+                            <div class="trust-label">COD Available</div>
+                            <div class="trust-sub">Pay at your doorstep</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trending Products Showcase -->
+    <section class="container mb-5" id="trendingSection">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <div>
+                <span class="text-uppercase small fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.12em;">Curated Selection</span>
+                <h2 class="h4 fw-bold mb-0">Trending Styles</h2>
+            </div>
+            <a href="products.html" class="small fw-semibold text-dark text-decoration-none">
+                View All Catalog <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div id="trendingProducts" class="row g-3 g-md-4">
+            <!-- Rendered dynamically by app.js -->
+        </div>
+    </section>
+
+    <!-- Promotional Editorial Banner -->
+    <section class="container mb-5">
+        <div class="promo-editorial-banner">
+            <div class="hero-pill-badge mb-2">
+                <i class="bi bi-tag-fill text-warning"></i> VIP Seasonal Privilege
+            </div>
+            <h2 class="h3 fw-bold mb-2">Enjoy Extra 20% OFF Entire Wardrobe</h2>
+            <p class="text-light-emphasis small mx-auto mb-2" style="max-width: 500px;">
+                Upgrade your seasonal rotation with luxury cotton shirts, sculpted denim, and handcrafted footwear.
+            </p>
+            <div>
+                <div class="promo-countdown" aria-label="Promotion countdown">
+                    <div><strong>04</strong><span>DAYS</span></div><b>:</b><div><strong>12</strong><span>HOURS</span></div><b>:</b><div><strong>48</strong><span>MINUTES</span></div><b>:</b><div><strong>26</strong><span>SECONDS</span></div>
+                </div>
+                <div class="coupon-badge-pill" id="promoCopyPill" title="Click to copy coupon code">
+                    <i class="bi bi-scissors text-warning"></i>
+                    <span id="couponCodeText">STAR20</span>
+                    <i class="bi bi-clipboard ms-1 small"></i>
+                </div>
+            </div>
+            <div>
+                <a href="products.html" class="btn btn-gold btn-sm px-4">
+                    Claim Privilege <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Arrivals Banner -->
+    <section class="container home-arrivals-section">
+        <div class="new-arrivals-banner">
+            <div><span class="eyebrow-label">JUST IN</span><h2>New arrivals, quietly exceptional.</h2><p>Modern silhouettes, considered fabrics, and the details that make everyday dressing feel elevated.</p></div>
+            <a href="products.html" class="btn btn-gold btn-sm">Discover the edit <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="container home-benefits-section">
+        <div class="section-heading-row"><div><span class="eyebrow-label">THE RAM STANDARD</span><h2 class="h4 mb-0">Made for the long run</h2></div></div>
+        <div class="benefits-grid">
+            <div class="benefit-item"><i class="bi bi-patch-check"></i><div><strong>Premium Quality</strong><span>Fabrics selected for feel and finish.</span></div></div>
+            <div class="benefit-item"><i class="bi bi-truck"></i><div><strong>Fast Delivery</strong><span>Thoughtful packaging, reliable dispatch.</span></div></div>
+            <div class="benefit-item"><i class="bi bi-arrow-repeat"></i><div><strong>Easy Returns</strong><span>30 days to find your perfect fit.</span></div></div>
+            <div class="benefit-item"><i class="bi bi-shield-lock"></i><div><strong>Secure Payment</strong><span>Protected checkout, every time.</span></div></div>
+        </div>
+    </section>
+
+    <!-- Atelier Newsletter -->
+    <section class="container home-newsletter-section">
+        <div class="atelier-newsletter"><span class="eyebrow-label">PRIVATE ACCESS</span><h2>Join the Atelier Club</h2><p>Receive first access to new collections, private offers, and considered style notes.</p><form class="atelier-form"><input type="email" placeholder="Your email address" aria-label="Email address" required><button class="btn btn-gold" type="submit">Join the club</button></form></div>
+    </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer-editorial py-5">
+    <div class="container">
+        <div class="row g-4 pb-4 border-bottom border-secondary border-opacity-25">
+            <div class="col-lg-4">
+                <div class="brand-mark-wrapper mb-3">
+                    <div class="brand-logo-icon">R</div>
+                    <span class="footer-brand-title">RAM MENS WEAR</span>
+                </div>
+                <p class="text-muted small pe-lg-4">
+                    Curated menswear delivering uncompromising tailoring, breathable luxury fabrics, and contemporary aesthetics designed for the modern gentleman.
+                </p>
+                <div class="d-flex gap-2 mt-3">
+                    <a href="#" class="social-icon-btn" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="social-icon-btn" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="social-icon-btn" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3 col-lg-2">
+                <h3 class="h6 fw-bold text-white mb-3">Collections</h3>
+                <ul class="list-unstyled">
+                    <li><a href="products.html?category=Shirts" class="footer-link">Formal Shirts</a></li>
+                    <li><a href="products.html?category=Jeans" class="footer-link">Denim & Trousers</a></li>
+                    <li><a href="products.html?category=T-Shirts" class="footer-link">Casual T-Shirts</a></li>
+                    <li><a href="products.html?category=Shoes" class="footer-link">Handcrafted Shoes</a></li>
+                    <li><a href="products.html?category=Accessories" class="footer-link">Accessories</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-md-3 col-lg-2">
+                <h3 class="h6 fw-bold text-white mb-3">Customer Care</h3>
+                <ul class="list-unstyled">
+                    <li><a href="orders.html" class="footer-link">Track Your Order</a></li>
+                    <li><a href="cart.html" class="footer-link">Shopping Bag</a></li>
+                    <li><a href="wishlist.html" class="footer-link">Saved Items</a></li>
+                    <li><a href="login.html" class="footer-link">Account Sign In</a></li>
+                    <li><a href="#" class="footer-link">Shipping & Returns</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <h3 class="h6 fw-bold text-white mb-3">Join the Atelier Club</h3>
+                <p class="text-muted small">Subscribe for private seasonal previews, bespoke styling guides, and private VIP member offers.</p>
+                <div class="input-group mb-3">
+                    <input type="email" class="form-control" placeholder="Enter your email" aria-label="Email address">
+                    <button class="btn btn-gold" type="button">Subscribe</button>
+                </div>
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    <i class="bi bi-shield-lock text-success"></i>
+                    <span>Secure 256-Bit SSL Encrypted Checkout</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pt-4 small text-muted">
+            <div>&copy; 2026 RAM MENS WEAR. All Rights Reserved.</div>
+            <div class="d-flex gap-3 mt-2 mt-md-0">
+                <a href="#" class="text-muted">Privacy Policy</a>
+                <a href="#" class="text-muted">Terms of Service</a>
+                <a href="#" class="text-muted">Store Locator</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+<script>
+    const promoPill = document.getElementById('promoCopyPill');
+    if (promoPill) {
+        promoPill.addEventListener('click', () => {
+            navigator.clipboard.writeText('STAR20');
+            showToast('Coupon code STAR20 copied to clipboard!', 'success');
+        });
+    }
+</script>
+</body>
+
+</html>
