@@ -4,9 +4,13 @@ const connectDB = require('./config/db');
 const User = require('./models/User');
 
 const email = process.env.ADMIN_EMAIL || 'admin@7star.com';
-const password = process.env.ADMIN_PASSWORD || 'Admin@12345';
+const password = process.env.ADMIN_PASSWORD;
 
 async function createAdmin() {
+  if (!password) {
+    throw new Error('ADMIN_PASSWORD is not set in the environment');
+  }
+
   await connectDB();
   const existingUser = await User.findOne({ email: email.toLowerCase() });
 
